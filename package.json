@@ -1,0 +1,35 @@
+{
+  "name": "heywiki-scraper",
+  "version": "1.0.0",
+  "description": "NodeJS scraper for Wikipedia help desk archives",
+  "main": "index.js",
+  "scripts": {
+    "start": "node script.js"
+  },
+  "keywords": [],
+  "author": "",
+  "licenses": [
+    {
+      "type": "MIT",
+      "name": "MIT License",
+      "url": "https://api.github.com/licenses/mit"
+    }
+  ],
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.10",
+    "date-fns": "^2.25.0",
+    "fs": "0.0.1-security",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6",
+    "xlsx": "^0.17.2"
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-prettier": "^4.0.0",
+    "nodemon": "^2.0.13",
+    "prettier": "^2.4.1"
+  }
+}
