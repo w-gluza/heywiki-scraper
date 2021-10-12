@@ -4,7 +4,7 @@
   "description": "NodeJS scraper for Wikipedia help desk archives",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon ./script.js localhost 8080"
+    "start": "nodemon --ext js ./script.js localhost 8080"
   },
   "keywords": [],
   "author": "",

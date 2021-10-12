@@ -3,8 +3,11 @@ const cheerio = require("cheerio");
 const request = require("request-promise");
 const eachDayOfInterval = require("date-fns/eachDayOfInterval");
 const format = require("date-fns/format");
+const fs = require("fs");
+const { convertArrayToCSV } = require("convert-array-to-csv");
 const { rangeDates } = require("./options/range");
 const { getISOFormat } = require("./utils/utils");
+
 // Base url
 const baseUrl = "https://en.wikipedia.org/wiki/Wikipedia:Help_desk/Archives/";
 
@@ -156,7 +159,17 @@ function cleanData(data) {
     answerTimeUTC: item.answerTimeUTC,
   }));
 
-  console.log("cleanedData", cleanedData[4]);
+  return cleanedData;
+}
+
+function createFiles(cleanedData) {
+  // Create JSON file from array of objects
+  const jsonFromArrayOfObjects = JSON.stringify(cleanedData);
+  fs.writeFileSync("data/questions.json", jsonFromArrayOfObjects);
+
+  // Create CSV file from array of objects
+  const csvFromArrayOfObjects = convertArrayToCSV(cleanedData);
+  fs.writeFileSync("data/questions.csv", csvFromArrayOfObjects);
 }
 
 // Be kind and do not send too many request to server
@@ -171,7 +184,8 @@ function delay(n) {
 const functionsWrapper = () => {
   getAllLinksResponses(links)
     .then((responses) => extractData(responses))
-    .then((res) => cleanData(res));
+    .then((res) => cleanData(res))
+    .then((data) => createFiles(data));
 };
 
 // Main function, where all the functions are being called
