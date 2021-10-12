@@ -52,12 +52,46 @@ async function getAllLinksResponses(arrayOfLinks) {
 async function extractData(responses) {
   const extractedQuestions = responses.map((res) => {
     const questionObject = res("h2")
-      .map((i, e) => ({
-        title: res(e).find(".mw-headline").text(),
+      .map((i, el) => ({
+        title: res(el).find(".mw-headline").text(),
+
+        question: res(el)
+          .nextUntil("dl")
+          .contents()
+          .filter(function returnNode() {
+            return this.nodeType === 3;
+          })
+          .text()
+          .replace(/\s\s+/g, "")
+          .replace("()", ""),
+
+        answer: res(el)
+          .nextUntil("dl")
+          .next("dl")
+          .find("dd")
+          .contents()
+          .filter(function returnNode() {
+            return this.nodeType === 3;
+          })
+          .text()
+          .replace(/\s\s+/g, "")
+          .replace("()", ""),
+
+        // questionTimeUTC: res(el)
+        //   .nextUntil("h2")
+        //   .text()
+        //   .match(/[0-9]{2}([:])[0-9]{2}/g),
+
+        // answerTimeUTC: res(el)
+        //   .nextUntil("dl")
+        //   .nextUntil("h2")
+        //   .text()
+        //   .match(/[0-9]{2}([:])[0-9]{2}/g),
       }))
       .get();
     return questionObject;
   });
+  console.log("extractedQuestions", extractedQuestions);
   return extractedQuestions;
 }
 
