@@ -106,13 +106,57 @@ async function extractData(responses) {
     ...o,
     questionTimeUTC: o.questionTimeUTC && o.questionTimeUTC[0],
     answerTimeUTC: o.questionTimeUTC && o.answerTimeUTC[0],
-    date: o.date && o.date[0],
+    date: o.date && getISOFormat(o.date[0]),
   }));
 
   const filterUnwantedObjects = initialCleanUp.filter((e) => e.title !== "");
-
-  console.log("filterUnwantedObjects", filterUnwantedObjects);
+  // console.log("filterUnwantedObjects", filterUnwantedObjects);
   return filterUnwantedObjects;
+}
+
+function removeInfoAboutTheUser(s) {
+  // Prepare data for removing user info and data from the text
+  const oldString = s
+    .replace(/[\n]+/g, " ")
+    .replace(/\\/g, " ")
+    .replace(/{/g, " ")
+    .replace(/}/g, " ");
+
+  // Remove info about the user and date
+  const newString = oldString.replace(
+    /[0-9]{2}([:])[0-9]{2}(,)( [0-9]+ )([A-Za-z]+ )[0-9]{4} ([(])([UTC]+)([)])/g,
+    ""
+  );
+
+  return newString;
+}
+function cleanString(string) {
+  //  Custom REGEX for all other issues
+  const customRegex = /@|([()])|◄|–|-/g;
+
+  const cleanedString = string
+    .replace(/"/g, "'") // Changes all double quotes into single quotes so JSON is valid.
+    .replace(customRegex, " ") // Custom reges rules applied.
+    .replace(/\s{2,}/g, " ") // Replaces multiple spaces to single one.
+    .replace(/\s+\./g, ".") // Replaces spaces before dot if any.
+    .trim(); // Trims end and start of the string so there is no whitespace.
+  return cleanedString;
+}
+
+function cleanData(data) {
+  // const customRegex = /@|([()])|◄|–/g;
+
+  const cleanedData = data.map((item) => ({
+    // id: cleanString(item.id),
+    date: item.date,
+    title: cleanString(item.title),
+    question: cleanString(removeInfoAboutTheUser(item.question)),
+    questionTimeUTC: item.questionTimeUTC,
+    answer: cleanString(removeInfoAboutTheUser(item.answer)),
+    answerTimeUTC: item.answerTimeUTC,
+  }));
+
+  console.log("cleanedData", cleanedData[4]);
 }
 
 // Be kind and do not send too many request to server
@@ -125,15 +169,13 @@ function delay(n) {
 }
 
 const functionsWrapper = () => {
-  getAllLinksResponses(links).then((responses) => {
-    extractData(responses);
-  });
+  getAllLinksResponses(links)
+    .then((responses) => extractData(responses))
+    .then((res) => cleanData(res));
 };
 
-// main function, this is where all functions are called
+// Main function, where all the functions are being called
 async function main() {
-  // console.log("Getting all raw rsponses from help desk");
-  // await getAllLinksResponses(links);
   await functionsWrapper(links);
   // console.log("Sleeping for 4 seconds");
   await delay(4000);
