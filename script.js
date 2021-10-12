@@ -4,7 +4,6 @@ const request = require("request-promise");
 const eachDayOfInterval = require("date-fns/eachDayOfInterval");
 const format = require("date-fns/format");
 const { rangeDates } = require("./options/range");
-
 // Base url
 const baseUrl = "https://en.wikipedia.org/wiki/Wikipedia:Help_desk/Archives/";
 
@@ -25,14 +24,17 @@ const changeDashToUnderline = mapTooLongDate.map((i) => i.replace(/-/g, "_"));
 const links = changeDashToUnderline.map((d) => `${baseUrl}${d}`);
 
 // Ajax request helper
-async function ajaxRequestHandler(singleQuestionLink) {
-  const response = await request({
-    singleQuestionLink,
-    json: true,
-  }).catch((err) => {
-    console.log(err);
-  });
-  return cheerio.load(response);
+async function ajaxRequestHandler(url) {
+  if (url) {
+    const response = await request({
+      url,
+      json: true,
+    }).catch((err) => {
+      console.log(err);
+    });
+    return cheerio.load(response);
+  }
+  return {};
 }
 
 // Request responses from all links
@@ -43,10 +45,20 @@ async function getAllLinksResponses(arrayOfLinks) {
   arrayOfLinks.map((singleLink) => ({
     singleLink: promises.push(handleRequest(singleLink)),
   }));
-
   const responses = await Promise.all(promises);
-  console.log("responses", responses);
   return responses;
+}
+
+async function extractData(responses) {
+  const extractedQuestions = responses.map((res) => {
+    const questionObject = res("h2")
+      .map((i, e) => ({
+        title: res(e).find(".mw-headline").text(),
+      }))
+      .get();
+    return questionObject;
+  });
+  return extractedQuestions;
 }
 
 // Be kind and do not send too many request to server
@@ -58,10 +70,17 @@ function delay(n) {
   });
 }
 
+const functionsWrapper = () => {
+  getAllLinksResponses(links).then((responses) => {
+    extractData(responses);
+  });
+};
+
 // main function, this is where all functions are called
 async function main() {
   // console.log("Getting all raw rsponses from help desk");
-  await getAllLinksResponses(links);
+  // await getAllLinksResponses(links);
+  await functionsWrapper(links);
   // console.log("Sleeping for 4 seconds");
   await delay(4000);
 }
