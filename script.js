@@ -4,6 +4,7 @@ const request = require("request-promise");
 const eachDayOfInterval = require("date-fns/eachDayOfInterval");
 const format = require("date-fns/format");
 const { rangeDates } = require("./options/range");
+const { getISOFormat } = require("./utils/utils");
 // Base url
 const baseUrl = "https://en.wikipedia.org/wiki/Wikipedia:Help_desk/Archives/";
 
@@ -51,8 +52,13 @@ async function getAllLinksResponses(arrayOfLinks) {
 
 async function extractData(responses) {
   const extractedQuestions = responses.map((res) => {
-    const questionObject = res("h2")
+    const pageArray = res("h2")
       .map((i, el) => ({
+        date: res(el)
+          .nextUntil("dl")
+          .nextUntil("h2")
+          .text()
+          .match(/[0-9]{2} +[^ ]+ [0-9]{4}/g),
         title: res(el).find(".mw-headline").text(),
 
         question: res(el)
@@ -64,6 +70,11 @@ async function extractData(responses) {
           .text()
           .replace(/\s\s+/g, "")
           .replace("()", ""),
+
+        questionTimeUTC: res(el)
+          .nextUntil("h2")
+          .text()
+          .match(/[0-9]{2}([:])[0-9]{2}/g),
 
         answer: res(el)
           .nextUntil("dl")
@@ -77,22 +88,31 @@ async function extractData(responses) {
           .replace(/\s\s+/g, "")
           .replace("()", ""),
 
-        // questionTimeUTC: res(el)
-        //   .nextUntil("h2")
-        //   .text()
-        //   .match(/[0-9]{2}([:])[0-9]{2}/g),
-
-        // answerTimeUTC: res(el)
-        //   .nextUntil("dl")
-        //   .nextUntil("h2")
-        //   .text()
-        //   .match(/[0-9]{2}([:])[0-9]{2}/g),
+        answerTimeUTC: res(el)
+          .nextUntil("dl")
+          .nextUntil("h2")
+          .text()
+          .match(/[0-9]{2}([:])[0-9]{2}/g),
       }))
       .get();
-    return questionObject;
+    return pageArray;
   });
-  console.log("extractedQuestions", extractedQuestions);
-  return extractedQuestions;
+
+  // Flatten array from [[], []] to this []
+  const flattenArray = extractedQuestions.flatMap((x) => x);
+
+  // First object of array
+  const initialCleanUp = flattenArray.map((o) => ({
+    ...o,
+    questionTimeUTC: o.questionTimeUTC && o.questionTimeUTC[0],
+    answerTimeUTC: o.questionTimeUTC && o.answerTimeUTC[0],
+    date: o.date && o.date[0],
+  }));
+
+  const filterUnwantedObjects = initialCleanUp.filter((e) => e.title !== "");
+
+  console.log("filterUnwantedObjects", filterUnwantedObjects);
+  return filterUnwantedObjects;
 }
 
 // Be kind and do not send too many request to server
