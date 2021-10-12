@@ -22,6 +22,7 @@ NodeJS scraper for Wikipedia help desk archives.
 ```sh
 npm start
    ```
+3. If you will change the range files will be automatically overwritten 
 
 
 ## License

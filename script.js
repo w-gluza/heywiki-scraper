@@ -165,20 +165,11 @@ function cleanData(data) {
 function createFiles(cleanedData) {
   // Create JSON file from array of objects
   const jsonFromArrayOfObjects = JSON.stringify(cleanedData);
-  fs.writeFileSync("data/questions.json", jsonFromArrayOfObjects);
+  fs.writeFileSync("data/helpDesk.json", jsonFromArrayOfObjects);
 
   // Create CSV file from array of objects
   const csvFromArrayOfObjects = convertArrayToCSV(cleanedData);
-  fs.writeFileSync("data/questions.csv", csvFromArrayOfObjects);
-}
-
-// Be kind and do not send too many request to server
-function delay(n) {
-  return new Promise((done) => {
-    setTimeout(() => {
-      done();
-    }, n);
-  });
+  fs.writeFileSync("data/helpDesk.csv", csvFromArrayOfObjects);
 }
 
 const functionsWrapper = () => {
@@ -191,8 +182,6 @@ const functionsWrapper = () => {
 // Main function, where all the functions are being called
 async function main() {
   await functionsWrapper(links);
-  // console.log("Sleeping for 4 seconds");
-  await delay(4000);
 }
 
 main();
