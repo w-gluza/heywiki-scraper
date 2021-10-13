@@ -78,17 +78,7 @@ async function extractData(responses) {
           .text()
           .match(/[0-9]{2}([:])[0-9]{2}/g),
 
-        answer: res(el)
-          .nextUntil("dl")
-          .next("dl")
-          .find("dd")
-          .contents()
-          .filter(function returnNode() {
-            return this.nodeType === 3;
-          })
-          .text()
-          .replace(/\s\s+/g, "")
-          .replace("()", ""),
+        answer: res(el).nextUntil("dl").next("dl").find("dd").contents().text(),
 
         answerTimeUTC: res(el)
           .nextUntil("dl")
@@ -109,9 +99,7 @@ async function extractData(responses) {
     answerTimeUTC: o.answerTimeUTC && o.answerTimeUTC[0],
     pageDate: o.pageDate && getISOFormat(o.pageDate[0]),
   }));
-  // console.log("initialCleanUp", initialCleanUp);
   const filterUnwantedObjects = initialCleanUp.filter((e) => e.title !== "");
-  // console.log("filterUnwantedObjects", filterUnwantedObjects);
   return filterUnwantedObjects;
 }
 
@@ -133,20 +121,20 @@ function removeInfoAboutTheUser(s) {
 }
 function cleanString(string) {
   //  Custom REGEX for all other issues
-  const customRegex = /@|([()])|◄|–|-/g;
+  const customRegex = /([()])|◄|–|-|([[]])/g;
 
   const cleanedString = string
+    .split("talk")[0]
     .replace(/"/g, "'") // Changes all double quotes into single quotes so JSON is valid.
     .replace(customRegex, " ") // Custom reges rules applied.
     .replace(/\s{2,}/g, " ") // Replaces multiple spaces to single one.
     .replace(/\s+\./g, ".") // Replaces spaces before dot if any.
+    .replace(/@.+?:/g, " ") // Replace user info @userName: REGEX looks for @ and :
     .trim(); // Trims end and start of the string so there is no whitespace.
   return cleanedString;
 }
 
 function cleanData(data) {
-  // const customRegex = /@|([()])|◄|–/g;
-
   const cleanedData = data.map((item) => ({
     date: item.pageDate,
     title: cleanString(item.title),
@@ -155,7 +143,6 @@ function cleanData(data) {
     answer: cleanString(removeInfoAboutTheUser(item.answer)),
     answerTimeUTC: item.answerTimeUTC,
   }));
-
   return cleanedData;
 }
 
