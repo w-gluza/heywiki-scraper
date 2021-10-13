@@ -1,8 +1,9 @@
+const parseISO = require("date-fns/parseISO");
+
 // Range for data scraping
-// Do not change date format eg. new Date(2021, 01, 10) will not be valid
 const rangeDates = {
-  startDate: new Date(2020, 1, 20),
-  endDate: new Date(2020, 7, 22),
+  startDate: parseISO("2020-01-20"),
+  endDate: parseISO("2020-02-05"),
 };
 
 module.exports = {
