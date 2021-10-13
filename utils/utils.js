@@ -48,7 +48,9 @@ function getMonth(month) {
 function getISOFormat(date) {
   const split = date.split(" ");
   const numericalMonth = getMonth(split[1]);
-  const formattedDate = `${split[2]}-${numericalMonth}-${split[0]}`;
+  const formatDay = split[2].length === 1 ? `0${split[2]}` : split[2];
+  const formattedDate = `${split[0]}-${numericalMonth}-${formatDay}`;
+
   return formattedDate;
 }
 

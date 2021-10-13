@@ -55,15 +55,14 @@ async function getAllLinksResponses(arrayOfLinks) {
 
 async function extractData(responses) {
   const extractedQuestions = responses.map((res) => {
+    const pageDate = res("h1")
+      .text()
+      .match(/[0-9]{4} +[^ ]+ [0-9]{1,2}/g);
+
     const pageArray = res("h2")
       .map((i, el) => ({
-        date: res(el)
-          .nextUntil("dl")
-          .nextUntil("h2")
-          .text()
-          .match(/[0-9]{2} +[^ ]+ [0-9]{4}/g),
+        pageDate,
         title: res(el).find(".mw-headline").text(),
-
         question: res(el)
           .nextUntil("dl")
           .contents()
@@ -100,7 +99,6 @@ async function extractData(responses) {
       .get();
     return pageArray;
   });
-
   // Flatten array from [[], []] to this []
   const flattenArray = extractedQuestions.flatMap((x) => x);
 
@@ -109,9 +107,9 @@ async function extractData(responses) {
     ...o,
     questionTimeUTC: o.questionTimeUTC && o.questionTimeUTC[0],
     answerTimeUTC: o.answerTimeUTC && o.answerTimeUTC[0],
-    date: o.date && getISOFormat(o.date[0]),
+    pageDate: o.pageDate && getISOFormat(o.pageDate[0]),
   }));
-
+  // console.log("initialCleanUp", initialCleanUp);
   const filterUnwantedObjects = initialCleanUp.filter((e) => e.title !== "");
   // console.log("filterUnwantedObjects", filterUnwantedObjects);
   return filterUnwantedObjects;
@@ -150,8 +148,7 @@ function cleanData(data) {
   // const customRegex = /@|([()])|◄|–/g;
 
   const cleanedData = data.map((item) => ({
-    // id: cleanString(item.id),
-    date: item.date,
+    date: item.pageDate,
     title: cleanString(item.title),
     question: cleanString(removeInfoAboutTheUser(item.question)),
     questionTimeUTC: item.questionTimeUTC,
