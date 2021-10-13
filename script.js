@@ -40,14 +40,17 @@ async function ajaxRequestHandler(url) {
 
 // Request responses from all links
 async function getAllLinksResponses(arrayOfLinks) {
-  const promises = [];
-  const handleRequest = (l) => ajaxRequestHandler(l);
+  const promises = arrayOfLinks.map(async (singleLink) => {
+    try {
+      return await ajaxRequestHandler(singleLink);
+    } catch (error) {
+      return null;
+    }
+  });
 
-  arrayOfLinks.map((singleLink) => ({
-    singleLink: promises.push(handleRequest(singleLink)),
-  }));
   const responses = await Promise.all(promises);
-  return responses;
+  const validResponses = responses.filter((r) => r !== null);
+  return validResponses;
 }
 
 async function extractData(responses) {
@@ -105,7 +108,7 @@ async function extractData(responses) {
   const initialCleanUp = flattenArray.map((o) => ({
     ...o,
     questionTimeUTC: o.questionTimeUTC && o.questionTimeUTC[0],
-    answerTimeUTC: o.questionTimeUTC && o.answerTimeUTC[0],
+    answerTimeUTC: o.answerTimeUTC && o.answerTimeUTC[0],
     date: o.date && getISOFormat(o.date[0]),
   }));
 
