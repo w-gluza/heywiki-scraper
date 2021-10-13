@@ -29,16 +29,13 @@ const links = changeDashToUnderline.map((d) => `${baseUrl}${d}`);
 
 // Ajax request helper
 async function ajaxRequestHandler(url) {
-  if (url) {
-    const response = await request({
-      url,
-      json: true,
-    }).catch((err) => {
-      console.log(err);
-    });
-    return cheerio.load(response);
-  }
-  return {};
+  const response = await request({
+    url,
+    json: true,
+  }).catch((err) => {
+    console.log(err);
+  });
+  return cheerio.load(response);
 }
 
 // Request responses from all links
