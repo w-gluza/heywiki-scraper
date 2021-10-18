@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 // Import dependencies
 const cheerio = require("cheerio");
 const request = require("request-promise");
@@ -66,9 +67,6 @@ async function extractData(responses) {
         question: res(el)
           .nextUntil("dl")
           .contents()
-          .filter(function returnNode() {
-            return this.nodeType === 3;
-          })
           .text()
           .replace(/\s\s+/g, "")
           .replace("()", ""),
@@ -121,10 +119,12 @@ function removeInfoAboutTheUser(s) {
 }
 function cleanString(string) {
   //  Custom REGEX for all other issues
-  const customRegex = /([()])|◄|–|-|([[]])/g;
+  const customRegex = /([()])|◄|—|([[]])/g;
 
   const cleanedString = string
-    .split("talk")[0]
+    .split("Preceding unsigned comment")[0]
+    // eslint-disable-next-line prettier/prettier
+    .split("\(talk)")[0]
     .replace(/"/g, "'") // Changes all double quotes into single quotes so JSON is valid.
     .replace(customRegex, " ") // Custom reges rules applied.
     .replace(/\s{2,}/g, " ") // Replaces multiple spaces to single one.
@@ -134,15 +134,24 @@ function cleanString(string) {
   return cleanedString;
 }
 
+function trimLastWord(string) {
+  const cleanedString = string // Trims end and start of the string so there is no whitespace.
+    .split(" ")
+    .slice(0, -1)
+    .join(" ");
+  return cleanedString;
+}
+
 function cleanData(data) {
   const cleanedData = data.map((item) => ({
     date: item.pageDate,
     title: cleanString(item.title),
     question: cleanString(removeInfoAboutTheUser(item.question)),
     questionTimeUTC: item.questionTimeUTC,
-    answer: cleanString(removeInfoAboutTheUser(item.answer)),
+    answer: trimLastWord(cleanString(removeInfoAboutTheUser(item.answer))),
     answerTimeUTC: item.answerTimeUTC,
   }));
+
   return cleanedData;
 }
 
