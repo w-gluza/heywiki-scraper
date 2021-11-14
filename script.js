@@ -9,24 +9,31 @@ const { convertArrayToCSV } = require("convert-array-to-csv");
 const { rangeDates } = require("./options/range");
 const { getISOFormat } = require("./utils/utils");
 
-// Base url
-const baseUrl = "https://en.wikipedia.org/wiki/Wikipedia:Help_desk/Archives/";
+// Base URL and Prefix URL simplified as basePath.
+// Entry-specific URL example = /2020_January_1.
 
-// Function to create a text file containing all links to questions
-const result = eachDayOfInterval({
+const baseURL = "https://en.wikipedia.org";
+const prefixURL = "/wiki/Wikipedia:Help_desk/Archives/";
+
+const basePath = `${baseURL}${prefixURL}`;
+
+// Function to create an array of dates
+const datesResults = eachDayOfInterval({
   start: rangeDates.startDate,
   end: rangeDates.endDate,
 });
 
-// Map date from 2021-01-11T23:00:00.000Z to 2021-January-12
-const mapTooLongDate = result.map((m) => format(m, "yyyy-MMMM-d"));
+// Map date from 2021-01-11T23:00:00.000Z to 2021-January-12.
+const mapTooLongDate = datesResults.map((m) => format(m, "yyyy-MMMM-d"));
 
-// Find and replace all "-" to "_"
-const changeDashToUnderline = mapTooLongDate.map((i) => i.replace(/-/g, "_"));
+// Find and replace all "-" with "_"
+const changeHyphenToUnderscore = mapTooLongDate.map((i) =>
+  i.replace(/-/g, "_")
+);
 
-// Create link to Wikipedia eg.
+// String Concatenation basePath + changeHyphenToUnderscore.
 // 'https://en.wikipedia.org/wiki/Wikipedia:Help_desk/Archives/2021_January_30',
-const links = changeDashToUnderline.map((d) => `${baseUrl}${d}`);
+const links = changeHyphenToUnderscore.map((d) => `${basePath}${d}`);
 
 // Ajax request helper
 async function ajaxRequestHandler(url) {
@@ -39,7 +46,7 @@ async function ajaxRequestHandler(url) {
   return cheerio.load(response);
 }
 
-// Request responses from all links
+// Request responses from all urls/links.
 async function getAllLinksResponses(arrayOfLinks) {
   const promises = arrayOfLinks.map(async (singleLink) => {
     try {
@@ -54,6 +61,7 @@ async function getAllLinksResponses(arrayOfLinks) {
   return validResponses;
 }
 
+// Extracting data from HTML by targeting specific tags and classes.
 async function extractData(responses) {
   const extractedQuestions = responses.map((res) => {
     const pageDate = res("h1")
@@ -90,7 +98,7 @@ async function extractData(responses) {
   // Flatten array from [[], []] to this []
   const flattenArray = extractedQuestions.flatMap((x) => x);
 
-  // First object of array
+  // Remove empty objects.
   const initialCleanUp = flattenArray.map((o) => ({
     ...o,
     questionTimeUTC: o.questionTimeUTC && o.questionTimeUTC[0],
@@ -101,15 +109,15 @@ async function extractData(responses) {
   return filterUnwantedObjects;
 }
 
+// Remove usernames from the question/answer.
 function removeInfoAboutTheUser(s) {
-  // Prepare data for removing user info and data from the text
   const oldString = s
     .replace(/[\n]+/g, " ")
     .replace(/\\/g, " ")
     .replace(/{/g, " ")
     .replace(/}/g, " ");
 
-  // Remove info about the user and date
+  // Target user/date.
   const newString = oldString.replace(
     /[0-9]{2}([:])[0-9]{2}(,)( [0-9]+ )([A-Za-z]+ )[0-9]{4} ([(])([UTC]+)([)])/g,
     ""
@@ -118,14 +126,14 @@ function removeInfoAboutTheUser(s) {
   return newString;
 }
 function cleanString(string) {
-  //  Custom REGEX for all other issues
+  //  Custom REGEX for symbols that needs to be removed from strings.
   const customRegex = /([()])|◄|—|([[]])/g;
 
   const cleanedString = string
     .split("Preceding unsigned comment")[0]
     // eslint-disable-next-line prettier/prettier
     .split("\(talk)")[0]
-    .replace(/"/g, "'") // Changes all double quotes into single quotes so JSON is valid.
+    .replace(/"/g, "'") // Changes all double quotes into single quotes so JSON is properly encoded.
     .replace(customRegex, " ") // Custom reges rules applied.
     .replace(/\s{2,}/g, " ") // Replaces multiple spaces to single one.
     .replace(/\s+\./g, ".") // Replaces spaces before dot if any.
@@ -156,11 +164,11 @@ function cleanData(data) {
 }
 
 function createFiles(cleanedData) {
-  // Create JSON file from array of objects
+  // Create JSON file from array of objects.
   const jsonFromArrayOfObjects = JSON.stringify(cleanedData);
   fs.writeFileSync("data/helpDesk.json", jsonFromArrayOfObjects);
 
-  // Create CSV file from array of objects
+  // Create CSV file from array of objects.
   const csvFromArrayOfObjects = convertArrayToCSV(cleanedData);
   fs.writeFileSync("data/helpDesk.csv", csvFromArrayOfObjects);
 }
@@ -172,7 +180,7 @@ const functionsWrapper = () => {
     .then((data) => createFiles(data));
 };
 
-// Main function, where all the functions are being called
+// Main function, where all the functions are being called.
 async function main() {
   await functionsWrapper(links);
 }
